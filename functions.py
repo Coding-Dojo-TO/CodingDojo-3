@@ -18,6 +18,48 @@ def parse_path(path):
             result.append(element)
     return result
 
+def create_structure(ptr,folder,option):
+    """
+    It creates the structure for the next level 
+    and change the pointer to new level
+    """
+    if option == 'dic':
+        ptr[folder] = {}
+    if option == 'lis':
+        ptr[folder] = []
+    ptr = ptr[folder]
+    return ptr
+
+
+def get_next_structure(ptr,folder,option):
+    """
+    It gets the next existing level when no new structure is needed.
+    """
+    if folder in ptr:
+        # point to next existing struct
+        ptr = ptr[folder]
+    else:
+        ptr = create_structure(ptr,folder,option)
+    return ptr
+
+
+def create_folders(ptr,paths,option):
+    """
+    It creates a folder in the next level for all except the last second element
+    """
+    folders = paths[:-2] # all except the last second element
+    for folder in folders:
+        ptr = get_next_structure(ptr,folder,option)
+    return ptr
+
+
+def create_list(ptr,paths,option):
+    """
+    It creates a list in the last second element
+    """
+    folder = paths[-2] # for last second element
+    ptr = get_next_structure(ptr,folder,option)
+    return ptr
 
 def generate_structure(initial_structure, paths):
     """
@@ -50,11 +92,11 @@ def generate_structure(initial_structure, paths):
     Output:
         {'home': {
                   'My Folder': ['File(Dojo).txt', 'File2(Dojo).txt'],
-                  'Second Folder': []
+                  'Second Folder': ['foo-bar']
                  }
         }
     Input:
-        initial_structure: {'home': {'My Folder': ['File(Dojo).txt', 'File2(Dojo).txt']}}
+        initial_structure: {'home': {'My Folder': ['File(Dojo).txt', 'File2(Dojo).txt'],'Second Folder':[]}}
         paths: ['home', 'Third Folder', 'another', 'another']
     Output:
         {'home': {
@@ -64,19 +106,20 @@ def generate_structure(initial_structure, paths):
                  }
         }
     """
-    path_dictionary = {}
-    current_level = path_dictionary
-    for path in paths:
-        if path != paths[:-1]:
-            current_level = add_level(current_level, path)
-        else:
-            current_level
+    # all you need is one pointer to allocate new nested structure
+    ptr = initial_structure
+    
+    # 1. Create folders if needed
+    ptr = create_folders(ptr,paths,'dic')
 
-
-def add_level(dictonary, element):
-    dictonary[element] = {}
-    return dictonary[element]
-
+    # 2. In last folder create list if needed
+    ptr = create_list(ptr,paths,'lis')
+                
+    # 3. Append the file to the list if any
+    ptr.append(paths[-1])
+            
+    # 4. return final structure
+    return initial_structure
 
 
 def get_structure(dir_list):
@@ -85,10 +128,10 @@ def get_structure(dir_list):
     :param dir_list: ['/home/foo-bar/file1.txt', '/home/bar/file1.txt', ...]
     :return: {
             'home': {
-                'foo-bar': ['foo-bar'],
+                'foo-bar': ['file1.txt'],
                 'bar': ['file1.txt'],
                 .
-                d.
+                .
                 .
             },
             .
